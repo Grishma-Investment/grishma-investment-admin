@@ -6,6 +6,7 @@ import JoditEditor from 'jodit-react';
 const AddArticle: React.FC = () => {
   const navigate = useNavigate();
   const editor = useRef<JoditEditor>(null);
+  let SERVER_IP =import.meta.env.VITE_SERVER_IP;
 
   const [formData, setFormData] = useState({
     title: '',
@@ -46,7 +47,7 @@ const AddArticle: React.FC = () => {
     setLoading(true);
 
     try {
-      const response = await fetch('http://localhost:5000/articles', {
+      const response = await fetch(`${SERVER_IP}/articles`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -7,6 +7,7 @@ const EditArticle: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const editor = useRef<JoditEditor>(null);
+  let SERVER_IP =import.meta.env.VITE_SERVER_IP;
 
   const [formData, setFormData] = useState({
     title: '',
@@ -21,7 +22,7 @@ const EditArticle: React.FC = () => {
   useEffect(() => {
     const fetchArticle = async () => {
       try {
-        const response = await fetch(`http://localhost:5000/articles/${id}`);
+        const response = await fetch(`${SERVER_IP}/articles/${id}`);
         if (!response.ok) {
           throw new Error('Failed to fetch article');
         }
@@ -69,7 +70,7 @@ const EditArticle: React.FC = () => {
     if (!validateForm()) return;
 
     try {
-      const response = await fetch(`http://localhost:5000/articles/${id}`, {
+      const response = await fetch(`${SERVER_IP}/articles/${id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
