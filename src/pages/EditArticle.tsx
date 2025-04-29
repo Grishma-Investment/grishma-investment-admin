@@ -7,15 +7,16 @@ const EditArticle: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const editor = useRef<JoditEditor>(null);
-  let SERVER_IP =import.meta.env.VITE_SERVER_IP;
+  const SERVER_IP = import.meta.env.VITE_SERVER_IP;
 
   const [formData, setFormData] = useState({
     title: '',
     thumbnailUrl: '',
     content: '',
-    category: '', // 👈 Added category just like AddArticle
+    category: '',
   });
   const [loading, setLoading] = useState<boolean>(true);
+  const [submitting, setSubmitting] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<boolean>(false);
 
@@ -23,15 +24,13 @@ const EditArticle: React.FC = () => {
     const fetchArticle = async () => {
       try {
         const response = await fetch(`${SERVER_IP}/articles/${id}`);
-        if (!response.ok) {
-          throw new Error('Failed to fetch article');
-        }
+        if (!response.ok) throw new Error('Failed to fetch article');
         const data = await response.json();
         setFormData({
           title: data.title,
           thumbnailUrl: data.thumbnailUrl,
           content: data.content,
-          category: data.category || '', // 👈 Also load category if available
+          category: data.category || '',
         });
       } catch (error: any) {
         setError('Error fetching article: ' + error.message);
@@ -41,22 +40,20 @@ const EditArticle: React.FC = () => {
     };
 
     fetchArticle();
-  }, [id]);
+  }, [id, SERVER_IP]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
   const handleEditorChange = (newContent: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      content: newContent,
-    }));
+    setFormData(prev => ({ ...prev, content: newContent }));
   };
 
   const validateForm = (): boolean => {
-    if (!formData.title || !formData.thumbnailUrl || !formData.content || !formData.category) {
+    const { title, thumbnailUrl, content, category } = formData;
+    if (!title || !thumbnailUrl || !content || !category) {
       setError('All fields are required.');
       return false;
     }
@@ -66,8 +63,9 @@ const EditArticle: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
     if (!validateForm()) return;
+
+    setSubmitting(true);
 
     try {
       const response = await fetch(`${SERVER_IP}/articles/${id}`, {
@@ -78,14 +76,14 @@ const EditArticle: React.FC = () => {
         body: JSON.stringify(formData),
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to update article');
-      }
+      if (!response.ok) throw new Error('Failed to update article');
 
       setSuccess(true);
       setTimeout(() => navigate('/articles'), 2000);
     } catch (error: any) {
       setError('Error updating article: ' + error.message);
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -100,6 +98,7 @@ const EditArticle: React.FC = () => {
   return (
     <Container className="py-4">
       <h2 className="mb-4 text-center fw-bold">Edit Article</h2>
+
       {success && (
         <Alert variant="success" className="text-center">
           Article updated successfully! Redirecting...
@@ -114,7 +113,7 @@ const EditArticle: React.FC = () => {
       <Form onSubmit={handleSubmit}>
         {/* Title */}
         <Form.Group controlId="title" className="mb-3">
-          <Form.Label className='fw-bold'>Article Title</Form.Label>
+          <Form.Label className="fw-bold">Article Title</Form.Label>
           <InputGroup>
             <InputGroup.Text><i className="fas fa-heading"></i></InputGroup.Text>
             <Form.Control
@@ -130,7 +129,7 @@ const EditArticle: React.FC = () => {
 
         {/* Thumbnail */}
         <Form.Group controlId="thumbnailUrl" className="mb-3">
-          <Form.Label className='fw-bold'>Thumbnail URL</Form.Label>
+          <Form.Label className="fw-bold">Thumbnail URL</Form.Label>
           <InputGroup>
             <InputGroup.Text><i className="fas fa-image"></i></InputGroup.Text>
             <Form.Control
@@ -146,7 +145,7 @@ const EditArticle: React.FC = () => {
 
         {/* Category */}
         <Form.Group controlId="category" className="mb-3">
-          <Form.Label className='fw-bold'>Category</Form.Label>
+          <Form.Label className="fw-bold">Category</Form.Label>
           <Form.Select
             name="category"
             value={formData.category}
@@ -164,26 +163,33 @@ const EditArticle: React.FC = () => {
           </Form.Select>
         </Form.Group>
 
-
         {/* Content */}
         <Form.Group controlId="content" className="mb-3">
-          <Form.Label className='fw-bold'>Article Content</Form.Label>
-          <div style={{ border: '1px solid #ced4da', borderRadius: '0.375rem', overflow: 'hidden', padding: '10px', backgroundColor: '#fafafa' }}>
+          <Form.Label className="fw-bold">Article Content</Form.Label>
+          <div
+            style={{
+              border: '1px solid #ced4da',
+              borderRadius: '0.375rem',
+              overflow: 'hidden',
+              padding: '10px',
+              backgroundColor: '#fafafa',
+            }}
+          >
             <JoditEditor
               ref={editor}
               value={formData.content}
-              onBlur={(newContent) => handleEditorChange(newContent)}
+              onChange={handleEditorChange} // ✅ Fixed: Changed from onBlur
               config={{
                 readonly: false,
-                placeholder: "Edit your article content here...",
+                placeholder: 'Edit your article content here...',
                 height: 500,
               }}
             />
           </div>
         </Form.Group>
 
-        <Button variant="primary" type="submit" className="w-100 mt-3">
-          {loading ? <Spinner animation="border" size="sm" /> : 'Update Article'}
+        <Button variant="primary" type="submit" className="w-100 mt-3" disabled={submitting}>
+          {submitting ? <Spinner animation="border" size="sm" /> : 'Update Article'}
         </Button>
       </Form>
     </Container>
