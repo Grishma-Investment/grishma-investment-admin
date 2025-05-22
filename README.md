@@ -33,7 +33,9 @@ This repository contains the main source code for the Grishma Investment Admin p
 - Create a `.env` file in the root directory to configure environment variables.
 - Copy the example file `.env.example` (if available) or define your own variables such as:
 ```env
-VITE_SERVER_IP= 'https://api.grishmainvestment.com'
+VITE_SECURITY_KEY=''
+VITE_SERVER_IP='https://api.grishmainvest.com'
+VITE_CLIENT_IP='https://grishmainvest.com'
 ```
 - Make sure to add .env to your .gitignore to keep sensitive information secure.
 - Adjust other configuration files if needed, depending on your project setup.
